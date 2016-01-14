@@ -9,4 +9,4 @@ docker run --rm -ti -h dev.local \
            -p 0.0.0.0:9000:9000 \
 	         -p 0.0.0.0:8025:8025 \
            --name localdev \
-            drupaldev
+            localdev

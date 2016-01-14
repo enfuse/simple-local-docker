@@ -1,2 +1,3 @@
 #!/bin/bash
-docker build -t drupaldev .
+docker build -t localdev .
+
