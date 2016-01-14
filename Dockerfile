@@ -1,5 +1,5 @@
-FROM ubuntu:12.04
-MAINTAINER Boris Böhne <info@drubb.de>
+FROM ubuntu:14.04.3
+MAINTAINER Juanjo López <juanjo.lopez@gmail.com>
 
 #
 # Step 1: Installation
@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND noninteractive
 VOLUME ["/var/www"]
 
 # Add additional repostories needed later
-RUN echo "deb http://ppa.launchpad.net/git-core/ppa/ubuntu precise main" >> /etc/apt/sources.list
+RUN echo "deb http://ppa.launchpad.net/git-core/ppa/ubuntu trusty main" >> /etc/apt/sources.list
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E1DF1F24
 
 # Update repositories cache and distribution
@@ -66,12 +66,21 @@ RUN apt-get -yqq install git
 RUN curl -sS https://getcomposer.org/installer | php && mv composer.phar /usr/local/bin/composer
 
 # Install drush (latest stable)
-USER docker
-RUN composer global require drush/drush:6.*
+RUN composer global require drush/drush
+# RUN composer global require drush/drush:6.*
+# RUN wget http://files.drush.org/drush.phar
+# RUN php drush.phar core-status
+# RUN chmod +x drush.phar
+# RUN mv drush.phar /usr/local/bin/drush
+
+# USER docker
+
+# RUN drush init
+
 USER root
 
 # Install PhpMyAdmin (latest version)
-RUN wget -q -O phpmyadmin.zip http://files.phpmyadmin.net/phpMyAdmin/4.4.11/phpMyAdmin-4.4.11-all-languages.zip && unzip -qq phpmyadmin.zip
+RUN wget -q -O phpmyadmin.zip http://files.phpmyadmin.net/phpMyAdmin/4.5.3.1/phpMyAdmin-4.5.3.1-all-languages.zip && unzip -qq phpmyadmin.zip
 RUN rm phpmyadmin.zip && mv phpMyAdmin*.* /opt/phpmyadmin
 
 # Install zsh / OH-MY-ZSH
@@ -91,6 +100,11 @@ RUN apt-get -yqq autoremove; apt-get -yqq autoclean; apt-get clean
 RUN wget -q -O mailhog https://github.com/mailhog/MailHog/releases/download/v0.1.7/MailHog_linux_386 && mv mailhog /usr/sbin/mailhog && chmod a+x /usr/sbin/mailhog
 RUN wget -q -O mhsendmail https://github.com/mailhog/mhsendmail/releases/download/v0.1.9/mhsendmail_linux_386 && mv mhsendmail /usr/sbin/mhsendmail && chmod a+x /usr/sbin/mhsendmail
 #RUN sed -i 's/;sendmail_path =/sendmail_path=\/usr\/sbin\/mhsendmail/g' /etc/php5/apache2/php.ini
+
+# Install pantheon cli tools
+# curl https://github.com/pantheon-systems/cli/releases/download/0.10.1/terminus.phar -L -o /usr/local/bin/terminus && chmod +x /usr/local/bin/terminus
+RUN composer require pantheon-systems/cli
+
 
 # Expose some ports to the host system (web server, MySQL, Xdebug)
 EXPOSE 80 443 3306 9000 1025 8025
@@ -113,13 +127,13 @@ ADD config/httpd.conf /etc/apache2/httpd.conf
 ADD config/vhosts/*.conf /etc/apache2/sites-available/
 
 # Add apache web server configuration file
-RUN ln -s /etc/apache2/sites-available/* /etc/apache2/sites-enabled/
+# RUN ln -s -f /etc/apache2/sites-available/* /etc/apache2/sites-enabled/
 
 # Disable default ssl site
 RUN a2dissite default-ssl
 
 # Configure needed apache modules and disable default site
-RUN a2enmod rewrite headers deflate expires ssl && a2dismod cgi autoindex status && a2dissite default
+RUN a2enmod rewrite headers deflate expires ssl && a2dismod cgi autoindex status #&& a2dissite default
 
 # Add additional php configuration file
 ADD config/php.ini /etc/php5/conf.d/php.ini
@@ -143,8 +157,9 @@ ADD config/.gitignore $HOME/.gitignore
 # Add drush global configuration file
 ADD config/drushrc.php $HOME/.drush/drushrc.php
 
+
 # Add apc status script
-RUN mkdir /opt/apc && gunzip -c /usr/share/doc/php-apc/apc.php.gz > /opt/apc/apc.php
+# RUN mkdir /opt/apc && gunzip -c /usr/share/doc/php-apc/apc.php.gz > /opt/apc/apc.php
 
 # Add zsh configuration
 ADD config/.zshrc $HOME/.zshrc
